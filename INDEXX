@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>itsyuen - Full 2FA Authenticator</title>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      font-family: sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    #form {
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 10px;
+      margin: 5px;
+      width: 180px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .account {
+      background: #111;
+      padding: 15px;
+      margin: 10px auto;
+      width: 300px;
+      border-radius: 8px;
+      text-align: left;
+      font-family: monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .otp {
+      font-size: 28px;
+      color: #0f0;
+    }
+
+    .account-name {
+      font-weight: bold;
+      font-size: 16px;
+      color: #ccc;
+    }
+
+    .remove-btn {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔐 itsyuen - 2FA Authenticator</h1>
+
+  <div id="form">
+    <input type="text" id="name" placeholder="Account Name" />
+    <input type="text" id="secret" placeholder="Secret Key (Base32)" />
+    <button onclick="addAccount()">➕ Add</button>
+    <button onclick="resetApp()">🗑 Clear All</button>
+  </div>
+
+  <div id="accounts"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/index.umd.min.js"></script>
+  <script>
+    let accounts = JSON.parse(localStorage.getItem('2fa-accounts') || '[]');
+    const container = document.getElementById('accounts');
+
+    function saveAccounts() {
+      localStorage.setItem('2fa-accounts', JSON.stringify(accounts));
+    }
+
+    function addAccount() {
+      const name = document.getElementById('name').value.trim();
+      const secret = document.getElementById('secret').value.trim().replace(/\s/g, '');
+
+      if (!name || !secret) return alert("Please enter both name and secret!");
+
+      accounts.push({ name, secret });
+      saveAccounts();
+      renderAccounts();
+      document.getElementById('name').value = '';
+      document.getElementById('secret').value = '';
+    }
+
+    function deleteAccount(index) {
+      if (confirm("Remove this account?")) {
+        accounts.splice(index, 1);
+        saveAccounts();
+        renderAccounts();
+      }
+    }
+
+    function resetApp() {
+      if (confirm("Clear ALL accounts?")) {
+        localStorage.removeItem('2fa-accounts');
+        accounts = [];
+        renderAccounts();
+      }
+    }
+
+    function renderAccounts() {
+      container.innerHTML = '';
+      accounts.forEach((acc, i) => {
+        const code = otplib.authenticator.generate(acc.secret);
+        const div = document.createElement('div');
+        div.className = 'account';
+        div.innerHTML = `
+          <div>
+            <div class="account-name">${acc.name}</div>
+            <div class="otp" id="otp-${i}">${code}</div>
+          </div>
+          <button class="remove-btn" onclick="deleteAccount(${i})">✖</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function refreshOTPs() {
+      accounts.forEach((acc, i) => {
+        try {
+          const code = otplib.authenticator.generate(acc.secret);
+          document.getElementById(`otp-${i}`).textContent = code;
+        } catch {
+          document.getElementById(`otp-${i}`).textContent = '------';
+        }
+      });
+    }
+
+    renderAccounts();
+    setInterval(refreshOTPs, 30000);
+  </script>
+
+</body>
+</html>
