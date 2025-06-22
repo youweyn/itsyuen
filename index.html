@@ -102,3 +102,107 @@
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>itsyuen - Multi-Account 2FA Authenticator</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 50%;
+      margin: 0 auto 30px auto;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    .account {
+      background: #111;
+      margin: 15px auto;
+      padding: 15px 20px;
+      max-width: 320px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: monospace;
+      font-size: 22px;
+    }
+
+    .account-name {
+      font-weight: bold;
+      font-size: 18px;
+      color: #ccc;
+    }
+
+    .otp {
+      font-size: 40px;
+      letter-spacing: 8px;
+      font-weight: bold;
+      color: #0f0;
+      min-width: 110px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo"></div>
+  <h1>🔐 itsyuen Authenticator</h1>
+
+  <div id="accounts-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/index.umd.min.js"></script>
+  <script>
+    // Define your accounts here — name and secret key (Base32)
+    const accounts = [
+      { name: 'Google', secret: 'JBSWY3DPEHPK3PXP' },
+      { name: 'GitHub', secret: 'KRSXG5DJMFXGSZ3Q' },
+      { name: 'Facebook', secret: 'NB2W45DFOIZA====' }
+    ];
+
+    const container = document.getElementById('accounts-container');
+
+    function generateAccountElements() {
+      container.innerHTML = '';
+      accounts.forEach((acc, i) => {
+        const div = document.createElement('div');
+        div.classList.add('account');
+        div.innerHTML = `
+          <div class="account-name">${acc.name}</div>
+          <div class="otp" id="otp-${i}">------</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateOTPs() {
+      accounts.forEach((acc, i) => {
+        try {
+          const code = otplib.authenticator.generate(acc.secret);
+          document.getElementById(`otp-${i}`).textContent = code;
+        } catch {
+          document.getElementById(`otp-${i}`).textContent = 'Invalid';
+        }
+      });
+    }
+
+    generateAccountElements();
+    updateOTPs();
+    setInterval(updateOTPs, 30000);
+  </script>
+
+</body>
+</html>
