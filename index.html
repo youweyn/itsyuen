@@ -12,11 +12,6 @@
       padding: 40px;
     }
 
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-    }
-
     .logo {
       width: 80px;
       height: 80px;
@@ -52,21 +47,32 @@
       margin-top: 20px;
       color: #0f0;
     }
+
+    #reader {
+      width: 300px;
+      margin: 20px auto;
+      display: none;
+    }
   </style>
 </head>
 <body>
 
   <div class="logo"></div>
   <h1>🔐 itsyuen Authenticator</h1>
-  <p>Enter your TOTP Secret Key below:</p>
 
+  <p>Enter TOTP Secret Key:</p>
   <input type="text" id="secret" placeholder="e.g. JBSWY3DPEHPK3PXP">
   <br>
   <button onclick="startOTP()">Start</button>
+  <br><br>
+  <button onclick="startScanner()">📷 Scan QR Code</button>
+
+  <div id="reader"></div>
 
   <div class="otp" id="otp">------</div>
 
   <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/index.umd.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8"></script>
   <script>
     const otpBox = document.getElementById('otp');
     let intervalId = null;
@@ -91,6 +97,34 @@
 
       updateOTP();
       intervalId = setInterval(updateOTP, 30000);
+    }
+
+    function startScanner() {
+      const reader = document.getElementById('reader');
+      reader.style.display = "block";
+
+      const qrScanner = new Html5Qrcode("reader");
+      qrScanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: 250
+        },
+        (decodedText) => {
+          // Parse the secret from URI (otpauth://)
+          const url = new URL(decodedText);
+          const secret = url.searchParams.get("secret");
+          if (secret) {
+            document.getElementById('secret').value = secret;
+            qrScanner.stop();
+            reader.style.display = "none";
+            startOTP();
+          }
+        },
+        (errorMessage) => {
+          // ignore scan errors
+        }
+      );
     }
   </script>
 
