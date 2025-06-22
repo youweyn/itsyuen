@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>itsyuen - 2FA Authenticator</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 50%;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 10px;
+      width: 280px;
+      font-size: 16px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background: white;
+      color: black;
+      cursor: pointer;
+    }
+
+    .otp {
+      font-size: 60px;
+      font-weight: bold;
+      margin-top: 20px;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo"></div>
+  <h1>🔐 itsyuen Authenticator</h1>
+  <p>Enter your TOTP Secret Key below:</p>
+
+  <input type="text" id="secret" placeholder="e.g. JBSWY3DPEHPK3PXP">
+  <br>
+  <button onclick="startOTP()">Start</button>
+
+  <div class="otp" id="otp">------</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/index.umd.min.js"></script>
+  <script>
+    const otpBox = document.getElementById('otp');
+    let intervalId = null;
+
+    function startOTP() {
+      const secret = document.getElementById('secret').value.trim();
+      if (!secret) {
+        alert("Please enter a secret key.");
+        return;
+      }
+
+      if (intervalId) clearInterval(intervalId);
+
+      function updateOTP() {
+        try {
+          const code = otplib.authenticator.generate(secret);
+          otpBox.textContent = code;
+        } catch (err) {
+          otpBox.textContent = "Invalid Secret";
+        }
+      }
+
+      updateOTP();
+      intervalId = setInterval(updateOTP, 30000);
+    }
+  </script>
+
+</body>
+</html>
